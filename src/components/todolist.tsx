@@ -21,9 +21,7 @@ type Task = {
 
 export default function TodoList() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>(
-    {}
-  );
+  const [timeRemaining, setTimeRemaining] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -81,7 +79,7 @@ export default function TodoList() {
       },
     });
 
-    if (formValues && formValues[0] && formValues[1]) {
+    if (formValues && formValues[0]?.trim() && formValues[1]) {
       const newTask: Omit<Task, 'id'> = {
         text: formValues[0],
         completed: false,
@@ -89,6 +87,46 @@ export default function TodoList() {
       };
       const docRef = await addDoc(collection(db, 'tasks'), newTask);
       setTasks([...tasks, { id: docRef.id, ...newTask }]);
+    } else {
+      Swal.fire('Gagal', 'Tugas dan deadline harus diisi!', 'error');
+    }
+  };
+
+  const editTask = async (task: Task): Promise<void> => {
+    const formattedDeadline = new Date(task.deadline).toISOString().slice(0, 16);
+    const { value: formValues } = await Swal.fire({
+      title: 'Edit Tugas',
+      html:
+        `<input id="swal-input1" class="swal2-input" placeholder="Nama tugas" value="${task.text}">` +
+        `<input id="swal-input2" type="datetime-local" class="swal2-input" value="${formattedDeadline}">`,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Simpan',
+      cancelButtonText: 'Batal',
+      preConfirm: () => {
+        return [
+          (document.getElementById('swal-input1') as HTMLInputElement)?.value,
+          (document.getElementById('swal-input2') as HTMLInputElement)?.value,
+        ];
+      },
+    });
+
+    if (formValues && formValues[0]?.trim() && formValues[1]) {
+      const updatedTask = {
+        ...task,
+        text: formValues[0],
+        deadline: formValues[1],
+      };
+
+      const taskRef = doc(db, 'tasks', task.id);
+      await updateDoc(taskRef, {
+        text: updatedTask.text,
+        deadline: updatedTask.deadline,
+      });
+
+      setTasks(tasks.map((t) => (t.id === task.id ? updatedTask : t)));
+    } else {
+      Swal.fire('Gagal', 'Nama tugas dan deadline tidak boleh kosong.', 'error');
     }
   };
 
@@ -122,7 +160,7 @@ export default function TodoList() {
       <ul>
         <AnimatePresence>
           {tasks.map((task) => {
-            const timeLeft = calculateTimeRemaining(task.deadline);
+            const timeLeft = timeRemaining[task.id] || 'Menghitung...';
             const isExpired = timeLeft === 'Waktu habis!';
             const taskColor = task.completed
               ? 'bg-green-200'
@@ -150,18 +188,26 @@ export default function TodoList() {
                   >
                     {task.text}
                   </span>
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="text-white p-1 rounded bg-red-600 hover:bg-red-800"
-                  >
-                    Hapus
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => editTask(task)}
+                      className="text-white p-1 rounded bg-blue-500 hover:bg-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteTask(task.id)}
+                      className="text-white p-1 rounded bg-red-600 hover:bg-red-800"
+                    >
+                      Hapus
+                    </button>
+                  </div>
                 </div>
                 <p className="text-sm text-gray-700">
                   Deadline: {new Date(task.deadline).toLocaleString()}
                 </p>
                 <p className="text-xs font-semibold text-gray-700">
-                  ⏳ {timeRemaining[task.id] || 'Menghitung...'}
+                  ⏳ {timeLeft}
                 </p>
               </motion.li>
             );
