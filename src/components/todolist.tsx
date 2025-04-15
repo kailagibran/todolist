@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../app/lib/firebase';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaBook } from 'react-icons/fa';
 
 type Task = {
   id: string;
@@ -156,7 +156,10 @@ export default function TodoList() {
     >
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-md p-6">
-          <h1 className="text-2xl font-bold text-center mb-4 text-gray-800">Todo List</h1>
+          <h1 className="text-2xl font-bold text-center mb-4 text-gray-800 flex items-center justify-center gap-2">
+            <FaBook />
+            Todo List
+          </h1>
 
           <button
             onClick={addTask}
@@ -181,7 +184,13 @@ export default function TodoList() {
                 <div onClick={() => toggleTask(task.id)} className="cursor-pointer flex-1 mr-4">
                   <p className="text-lg font-medium text-gray-800">{task.text}</p>
                   <p className="text-xs text-gray-500">📅 {new Date(task.deadline).toLocaleString()}</p>
-                  <p className="text-xs text-red-500">⏳ {timeRemaining[task.id] || '...'}</p>
+                  <p className={`text-xs ${
+                    timeRemaining[task.id] === '⏰ Waktu habis'
+                      ? 'text-red-700 font-semibold'
+                      : 'text-red-500'
+                  }`}>
+                    ⏳ {timeRemaining[task.id] || '...'}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
