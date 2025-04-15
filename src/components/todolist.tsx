@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../app/lib/firebase';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa'; // Tambah ikon plus
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 
 type Task = {
   id: string;
@@ -171,7 +171,11 @@ export default function TodoList() {
               <li
                 key={task.id}
                 className={`p-4 border rounded flex justify-between items-center ${
-                  task.completed ? 'bg-gray-200 line-through' : 'bg-gray-50'
+                  task.completed
+                    ? 'bg-gray-200 line-through'
+                    : timeRemaining[task.id] === '⏰ Waktu habis'
+                      ? 'bg-red-100'
+                      : 'bg-gray-50'
                 }`}
               >
                 <div onClick={() => toggleTask(task.id)} className="cursor-pointer flex-1 mr-4">
